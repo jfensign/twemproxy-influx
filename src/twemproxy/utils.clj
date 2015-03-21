@@ -9,15 +9,18 @@
 	(import (java.io BufferedReader
 		             IOException
 		             InputStreamReader)
-			(java.net Socket)))
+			      (java.net Socket)))
 
 
-(def influxC
+(def influx-c
   (influx/make-client {
-    :db       "twemproxy"
-    :username "jensign"
-    :password "twemproxy" }))
+    :db       config/influxdb-db
+    :username config/influxdb-user
+    :password config/influxdb-pass }))
 
+
+(defn ^:public thread-loop [f s & f-args]
+	(future (loop [] (apply f f-args) (Thread/sleep (* s 1000)) (recur))))
 
 
 (defn ^:private -select-key-by-type
@@ -31,8 +34,8 @@
   (slingshot/try+
   	(do
   		(let [client (def tcp-cli (Socket. config/twemproxy-host (read-string config/twemproxy-port)))
-  			  reader (BufferedReader. (InputStreamReader. (.getInputStream tcp-cli)))
-  			  stats  (.readLine reader)]
+  			     reader (BufferedReader. (InputStreamReader. (.getInputStream tcp-cli)))
+  			     stats  (.readLine reader)]
   			(clojure.walk/keywordize-keys (parse-string stats))))
   	(catch Object _
   		(println (:throwable &throw-context) "Error")
@@ -46,17 +49,16 @@
 	(slingshot/try+
 		(do
 			(let [stats    (stats-tcp)
-				  ts       (:timestamp stats)
-				  clusters (-select-key-by-type stats clojure.lang.PersistentArrayMap)]
+				     ts       (:timestamp stats)
+				     clusters (-select-key-by-type stats clojure.lang.PersistentArrayMap)]
 				(doseq [stat clusters]
-					(let [cluster-name (first stat)
-						  cluster-dbs  (-select-key-by-type (second stat) clojure.lang.PersistentHashMap)
-						  influx-data (mapv #(conj (second %) {:cluster_name cluster-name 
-									  						   :server_name  (clojure.string/replace (str (first %)) #":" "") 
-									  						   :time ts})
-						  					cluster-dbs)]
-						(println influx-data)
-						(influx/post-points influxC (count influx-data) influx-data)))))
+					(let [cluster-dbs  (-select-key-by-type (second stat) clojure.lang.PersistentHashMap)
+						     influx-data (mapv #(conj (second %) {
+						     	:cluster_name (first stat)
+									  	:server_name  (clojure.string/replace (str (first %)) #":" "") }) 
+						     cluster-dbs)]
+						(println "Capture")
+						(influx/post-points influx-c config/influxdb-twemproxy-cluster-table influx-data)))))
 		(catch Object _
 			(println (.getMessage (:throwable &throw-context)) "Error"))))
 
