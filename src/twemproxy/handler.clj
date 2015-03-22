@@ -8,16 +8,16 @@
             [ring.util.response :refer [resource-response response]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
 
+(utils/fetch-config)
 (utils/thread-loop utils/influx-capture config/capture-interval)
 
 (defroutes app-routes
   (GET  "/" []
   	(resource-response "index.html" {:root "public/"}))
-  (context "/configure" []
+  (context "/configuration" []
     (GET "/" []
-      (utils/fetch-config)
-      (response {:start true})))
-  (context "/poll" []
+      (response (utils/fetch-config))))
+  (context "/stats" []
   	(GET "/" []
   	  (response (utils/stats-tcp)))))
 

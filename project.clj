@@ -13,7 +13,8 @@
                  [cheshire "5.4.0"]
                  [capacitor "0.4.2"]
                  [clj-ssh "0.5.11"]
-                 [clj-yaml "0.4.0"]]
+                 [clj-yaml "0.4.0"]
+                 [org.clojure/core.typed "0.2.84"]]
   :plugins [[lein-ring "0.8.13"]]
   :ring {:handler twemproxy.handler/app}
   :profiles

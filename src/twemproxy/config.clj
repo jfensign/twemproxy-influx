@@ -25,3 +25,7 @@
 (def ssh-key-path (or (System/getenv "SSH_KEY_PATH") "~/.ssh/id_rsa"))
 
 (def twemproxy-config-path (or (System/getenv "TWEMPROXY_CONFIG_PATH") "/tmp/nutcracker.yml"))
+
+(def nutcracker-yml (atom {}))
+
+(def local-redis-port (or (System/getenv "LOCAL_REDIS_PORT") "6379"))
