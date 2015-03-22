@@ -19,3 +19,9 @@
 (def influxdb-db (or (System/getenv "DB_NAME") "twemproxy"))
 
 (def capture-interval (or (System/getenv "CAPTURE_INTERVAL") 15))
+
+(def ssh-user (or (System/getenv "SSH_USER") "ubuntu"))
+
+(def ssh-key-path (or (System/getenv "SSH_KEY_PATH") "~/.ssh/id_rsa"))
+
+(def twemproxy-config-path (or (System/getenv "TWEMPROXY_CONFIG_PATH") "/tmp/nutcracker.yml"))

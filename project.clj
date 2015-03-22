@@ -11,7 +11,9 @@
                  [clj-tcp "0.4.9"]
                  [com.taoensso/carmine "2.9.0"]
                  [cheshire "5.4.0"]
-                 [capacitor "0.4.2"]]
+                 [capacitor "0.4.2"]
+                 [clj-ssh "0.5.11"]
+                 [clj-yaml "0.4.0"]]
   :plugins [[lein-ring "0.8.13"]]
   :ring {:handler twemproxy.handler/app}
   :profiles

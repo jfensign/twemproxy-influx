@@ -13,6 +13,10 @@
 (defroutes app-routes
   (GET  "/" []
   	(resource-response "index.html" {:root "public/"}))
+  (context "/configure" []
+    (GET "/" []
+      (utils/fetch-config)
+      (response {:start true})))
   (context "/poll" []
   	(GET "/" []
   	  (response (utils/stats-tcp)))))
