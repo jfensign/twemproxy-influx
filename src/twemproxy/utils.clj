@@ -21,9 +21,12 @@
     :username config/influxdb-user
     :password config/influxdb-pass }))
 
+
 (def redis-conn {:pool {} :spec {:port (read-string config/local-redis-port)}})
 
+
 (defmacro wcar* [& body] `(car/wcar redis-conn ~@body))
+
 
 (defn ^:public thread-loop [f s & f-args]
 	(future (loop [] (apply f f-args) (Thread/sleep (* s 1000)) (recur))))
@@ -55,6 +58,7 @@
 	([^String f-path]
 		(clojure.walk/keywordize-keys (yaml/parse-string (slurp f-path)))))
 
+
 (defn- ^:private ssh-redis-info
 	"Connect to remote Redis server via SSH tunnel. 
 	 Useful if you can't configure a static IP address or your Redis server resides in a VPC."
@@ -69,6 +73,7 @@
       (clojure.walk/keywordize-keys (wcar* (car/info*)))))))
 			(catch Object _
 				(println (.getMessage (:throwable &throw-context)) "Errors"))))
+
 
 (defn ^:public fetch-config
 	"Retrieves nutcracker.yml via scp."
@@ -109,7 +114,7 @@
 					(let [cluster-dbs  (select-key-by-type (second cluster) clojure.lang.PersistentHashMap)
 						     influx-data (mapv #(conj (second %) {
 						     	:cluster_name (first cluster)
-									  	:server_name  (clojure.string/replace (str (first %)) #":" "") }) 
+									  	:server_name  (clojure.string/replace (str (first %)) #":" "") })
 						     cluster-dbs)]
 						(doseq [datum influx-data]
 							(let [server (first (for [server (:servers ((:cluster_name datum) @config/nutcracker-yml)) 

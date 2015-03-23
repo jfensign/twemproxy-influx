@@ -1,0 +1,21 @@
+influxdb:
+  image: tutum/influxdb
+  ports:
+    - "8083:8083"
+    - "8086:8086"
+    - "8090:8090"
+    - "8099:8099"
+
+grafana:
+  image: tutum/grafana
+  ports:
+    - "8080:8080"
+  environment:
+    - INFLUXDB_HOST=localhost
+    - INFLUXDB_PORT=8086
+    - INFLUXDB_NAME=data
+    - INFLUXDB_USER=root
+    - INFLUXDB_PASS=root
+    - INFLUXDB_IS_GRAFANADB=true
+    - ELASTICSEARCH_HOST=localhost
+    - ELASTICSEARCH_PORT=9200

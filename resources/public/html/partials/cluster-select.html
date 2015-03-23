@@ -1,0 +1,8 @@
+<div ng-controller="ClusterSelectCtrl" class="col-12">
+    <ol class="breadcrumb">
+        <li><a href="#/clusters">Clusters</a></li>
+        <li class="active">{{selected_cluster}}</li>
+    </ol>
+	<div id="cluster_select_grid" ng-grid="cluster_select_grid_options" class="grid"></div>
+	<ul><li ng-repeat="(key, val) in cluster_config">{{key}}</li></ul>
+</div>

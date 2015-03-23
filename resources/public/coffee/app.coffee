@@ -1,6 +1,6 @@
 'use strict';
 
-app = angular.module 'TwemproxyMonit',[
+app = angular.module 'TwemproxyMonit', [
   'ngRoute'
   'ngResource'
   'Controllers'

@@ -1,0 +1,42 @@
+<div class="ui-grid-header">
+  <div class="ui-grid-top-panel">
+    <div ui-grid-group-panel="" ng-show="grid.options.showGroupPanel" class="">
+      <div class="ui-grid-group-panel ng-scope">
+        <div ui-t="groupPanel.description" class="description " ng-show="groupings.length == 0">
+          Drag a column header here and drop it to group by that column.</div>
+        <ul ng-show="groupings.length > 0" class="ngGroupList ">
+          <!-- ngRepeat: group in configGroups -->
+        </ul>
+      </div>
+    </div>
+    <div class="ui-grid-header-viewport">
+      <div class="ui-grid-header-canvas">
+         <!--ngRepeat: col in colContainer.renderedColumns track by col.colDef.name -->
+        <div class="ui-grid-header-cell clearfix" ng-repeat="col in colContainer.renderedColumns track by col.colDef.name" ui-grid-header-cell="" col="col" render-index="$index" ng-style="$index === 0 &amp;&amp; colContainer.columnStyle($index)">
+          <div ng-class="{ 'sortable': sortable }" class="sortable">
+            <div class="ui-grid-vertical-bar">&nbsp;</div>
+            <div class="ui-grid-cell-contents" col-index="renderIndex">
+              <span class="">{{col.colDef.DisplayName}}</span>
+              <span ui-grid-visible="col.sort.direction" ng-class="{ 'ui-grid-icon-up-dir': col.sort.direction == asc, 'ui-grid-icon-down-dir': col.sort.direction == desc, 'ui-grid-icon-blank': !col.sort.direction }" class="ui-grid-invisible ui-grid-icon-blank">&nbsp;</span>
+            </div>
+            <!-- ngIf: grid.options.enableColumnMenus && !col.isRowHeader  && col.colDef.enableColumnMenu !== false -->
+            <!-- ngRepeat: colFilter in col.filters -->
+            <!-- ngIf: filterable -->
+            <div ng-if="filterable" class="ui-grid-filter-container" ng-repeat="colFilter in col.filters">
+              {{colFilter}}
+              <input type="text" class="ui-grid-filter-input" ng-model="colFilter.term" ng-click="$event.stopPropagation()" ng-attr-placeholder="{{colFilter.placeholder || ''}}" placeholder="">
+              <div class="ui-grid-filter-button" ng-click="colFilter.term = null">
+                <i class="ui-grid-icon-cancel right" ng-show="!!colFilter.term">&nbsp;</i>
+                <!-- use !! because angular interprets 'f' as false -->
+              </div>
+            </div>
+            <!-- end ngIf: filterable --><!-- end ngRepeat: colFilter in col.filters -->
+          </div>
+        </div>
+        <!-- end ngRepeat: col in colContainer.renderedColumns track by col.colDef.name -->
+      </div>
+    </div>
+    <div ui-grid-menu="" class=""><!-- ngIf: shown -->
+    </div>
+  </div>
+</div>
