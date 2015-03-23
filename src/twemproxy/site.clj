@@ -8,6 +8,6 @@
           [clojure.java.io :as io]))
 
 (defroutes site-routes
-  (GET "/" [] (slurp (str config/resource-dir "/index.html"))))
+  (GET "/" [] (slurp (str config/public-dir "/html/index.html"))))
 
 (def site (handler/site site-routes))
