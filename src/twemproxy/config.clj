@@ -29,3 +29,7 @@
 (def nutcracker-yml (atom {}))
 
 (def local-redis-port (or (System/getenv "LOCAL_REDIS_PORT") "6379"))
+
+(def resource-dir "resources")
+
+(def public-dir (str resource-dir "/public"))

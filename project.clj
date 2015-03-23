@@ -14,7 +14,8 @@
                  [capacitor "0.4.2"]
                  [clj-ssh "0.5.11"]
                  [clj-yaml "0.4.0"]
-                 [org.clojure/core.typed "0.2.84"]]
+                 [org.clojure/core.typed "0.2.84"]
+                 [hiccup "1.0.5"]]
   :plugins [[lein-ring "0.8.13"]]
   :ring {:handler twemproxy.handler/app}
   :profiles

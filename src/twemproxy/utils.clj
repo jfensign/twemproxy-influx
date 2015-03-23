@@ -116,8 +116,7 @@
 																																	:let [server-split (clojure.string/split server #"\s+")
 									                              server-id (last server-split)
 									                              server-ad (first server-split)] 
-									                        :when (= (:server_name datum) server-id)]
-									             			server-ad))
+									                        :when (= (:server_name datum) server-id)] server-ad))
 								     server-stats (apply conj datum (ssh-redis-info server) {:connection_string server})]
 								(influx/post-points influx-c config/influxdb-twemproxy-cluster-table [server-stats])))))))
 		(catch Object _
