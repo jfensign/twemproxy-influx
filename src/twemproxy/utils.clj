@@ -8,12 +8,12 @@
               [clj-yaml.core :as yaml]
               [taoensso.carmine :as car :refer (wcar)])
 	(use  clj-tcp.client :reload
-		     clj-ssh.ssh)
+		     clj-ssh.ssh
+		     [clojure.java.shell :only [sh]])
 	(import (java.io BufferedReader
 		             IOException
 		             InputStreamReader)
 			      (java.net Socket)))
-
 
 (def influx-c
   (influx/make-client {
@@ -21,30 +21,34 @@
     :username config/influxdb-user
     :password config/influxdb-pass }))
 
+(def redis-conn 
+	{:pool {} 
+	 :spec {:port (read-string config/local-redis-port)}})
 
-(def redis-conn {:pool {} :spec {:port (read-string config/local-redis-port)}})
 
-
-(defmacro wcar* [& body] `(car/wcar redis-conn ~@body))
+(defmacro wcar* [& body]
+ "Redis be pipin'" 
+	`(car/wcar redis-conn ~@body))
 
 
 (defn ^:public thread-loop [f s & f-args]
+	"Run indefinitely using futures"
 	(future (loop [] (apply f f-args) (Thread/sleep (* s 1000)) (recur))))
 
 
 (defn- ^:private select-key-by-type
+	"Filters keys by clojure.lang.THATSUPTOYOU!"
 	[m t]
 	(select-keys m (for [[k v] m :when (instance? t v)] k)))
-
 
 (defn ^:public stats-tcp
   "TCP Client to read from Twemproxy stats socket"
   []
   (slingshot/try+
   	(do
-  		(let [client (def tcp-cli (Socket. config/twemproxy-host (read-string config/twemproxy-port)))
-  			     reader (BufferedReader. (InputStreamReader. (.getInputStream tcp-cli)))
-  			     stats  (.readLine reader)]
+  		(let [client (Socket. config/twemproxy-host (read-string config/twemproxy-port))
+  			  reader (BufferedReader. (InputStreamReader. (.getInputStream client)))
+  			  stats  (.readLine reader)]
   			(clojure.walk/keywordize-keys (parse-string stats))))
   	(catch Object _
   		(println (:throwable &throw-context) "Error")
@@ -72,11 +76,12 @@
 			 	(with-local-port-forward [sess (read-string config/local-redis-port) (read-string (nth server-split 1)) (first server-split)]
       (clojure.walk/keywordize-keys (wcar* (car/info*)))))))
 			(catch Object _
-				(println (.getMessage (:throwable &throw-context)) "Errors"))))
+				(comment (println (.getMessage (:throwable &throw-context)) "Errors")))))
 
 
 (defn ^:public fetch-config
-	"Retrieves nutcracker.yml via scp."
+	"Retrieves nutcracker.yml via scp. 
+	 Parses into clojure.lang.HashMap and stores in atom config/nutcracker-yml"
 	([]
 		(fetch-config config/twemproxy-config-path config/ssh-key-path config/ssh-user))
 	([^String f-path ^String i-path ^String x-user]
@@ -88,6 +93,7 @@
 			 	(let [cp-to (str "./nutcracker." config/twemproxy-host ".yml")
 			 		     conf-file (scp-from sess f-path cp-to)]
 			 		(reset! config/nutcracker-yml (parse-nutcracker-config cp-to))
+			 		
 			 		@config/nutcracker-yml))))
 			(catch Object _
 				(println (.getMessage (:throwable &throw-context)) "Errors")))))
@@ -95,9 +101,17 @@
 
 (defn ^:public benchmark
 	"Run redis-benchmark against cluster"
-	[]
+	[cluster]
 	(slingshot/try+
-		(println "Benchmark")
+		(let [cluster-config ((keyword cluster) @config/nutcracker-yml)]
+			(if cluster-config
+					(println (:out (sh "timeout"
+																								"30s"
+																								"redis-cli"
+																								"--latency" 
+							 																"-h" config/twemproxy-host 
+							 																"-p" (last (clojure.string/split (:listen cluster-config) #":")))))
+				{:status 404 :body {:error "Not found"}}))
 		(catch Object _
 			(println (.getMessage (:throwable &throw-context)) "Error"))))
 

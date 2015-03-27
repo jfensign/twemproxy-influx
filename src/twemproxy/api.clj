@@ -2,7 +2,7 @@
  (:require [twemproxy.utils :as utils]
           [twemproxy.config :as config]
           [compojure.core :refer :all]
-  		  [compojure.handler :as handler]
+  		    [compojure.handler :as handler]
           [compojure.route :as route]
           [ring.middleware.json :as middleware]
           [ring.util.response :refer [resource-response response]]))
@@ -12,9 +12,19 @@
   (context "/configuration" []
     (GET "/" []
       (response (utils/fetch-config))))
+
   (context "/stats" []
   	(GET "/" []
   	  (response (utils/stats-tcp))))
+
+  (context "/clusters" {query :query-params {headers :headers} :params body :body ip :remote-addr}
+    (GET "/" []
+      (response (utils/fetch-config)))
+    (GET "/:cluster" [cluster]
+      (response (utils/fetch-config)))
+    (GET "/:cluster/benchmark" [cluster]
+      (response (utils/benchmark cluster))))
+
   (route/files "/public" {:root config/public-dir})
   (route/not-found {:status 404 :body {:error "Not Found"}}))
 
