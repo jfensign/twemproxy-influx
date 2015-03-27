@@ -14,7 +14,8 @@
 (utils/fetch-config)
 
 ;Periodically save redis stats in influxDB every X seconds where x = config/intrerval
-(utils/thread-loop utils/influx-capture config/capture-interval)
+(utils/thread-loop utils/influx-capture-info config/capture-interval)
+(utils/thread-loop utils/influx-capture-latency config/capture-interval)
 
 ;;;MIDDLEWARE
 (def app 

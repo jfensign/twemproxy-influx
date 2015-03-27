@@ -22,8 +22,8 @@
       (response (utils/fetch-config)))
     (GET "/:cluster" [cluster]
       (response (utils/fetch-config)))
-    (GET "/:cluster/benchmark" [cluster]
-      (response (utils/benchmark cluster))))
+    (GET "/:cluster/latency" [cluster]
+      (response (utils/cluster-latency cluster))))
 
   (route/files "/public" {:root config/public-dir})
   (route/not-found {:status 404 :body {:error "Not Found"}}))

@@ -15,11 +15,13 @@
 		             InputStreamReader)
 			      (java.net Socket)))
 
+
 (def influx-c
   (influx/make-client {
     :db       config/influxdb-db
     :username config/influxdb-user
     :password config/influxdb-pass }))
+
 
 (def redis-conn 
 	{:pool {} 
@@ -40,6 +42,7 @@
 	"Filters keys by clojure.lang.THATSUPTOYOU!"
 	[m t]
 	(select-keys m (for [[k v] m :when (instance? t v)] k)))
+
 
 (defn ^:public stats-tcp
   "TCP Client to read from Twemproxy stats socket"
@@ -70,10 +73,13 @@
 		(slingshot/try+
 			(let [ssh-a (ssh-agent {})]
 				(add-identity ssh-a {:private-key-path config/ssh-key-path})
-				(let [sess  (session ssh-a config/twemproxy-host {:strict-host-key-checking :no :username config/ssh-user})
+				(let [sess  (session ssh-a config/twemproxy-host {:strict-host-key-checking :no 
+																																																						:username config/ssh-user})
 					     server-split (clojure.string/split server #":")]
 			 (with-connection sess
-			 	(with-local-port-forward [sess (read-string config/local-redis-port) (read-string (nth server-split 1)) (first server-split)]
+			 	(with-local-port-forward [sess (read-string config/local-redis-port) 
+			 																																(read-string (nth server-split 1)) 
+			 																																(first server-split)]
       (clojure.walk/keywordize-keys (wcar* (car/info*)))))))
 			(catch Object _
 				(comment (println (.getMessage (:throwable &throw-context)) "Errors")))))
@@ -88,35 +94,51 @@
 		(slingshot/try+
 			(let [ssh-a (ssh-agent {})]
 				(add-identity ssh-a {:private-key-path i-path})
-				(let [sess  (session ssh-a config/twemproxy-host {:strict-host-key-checking :no :username x-user})]
+				(let [sess  (session ssh-a config/twemproxy-host {:strict-host-key-checking :no 
+																																																						:username x-user})]
 			 (with-connection sess
 			 	(let [cp-to (str "./nutcracker." config/twemproxy-host ".yml")
 			 		     conf-file (scp-from sess f-path cp-to)]
 			 		(reset! config/nutcracker-yml (parse-nutcracker-config cp-to))
-			 		
 			 		@config/nutcracker-yml))))
 			(catch Object _
 				(println (.getMessage (:throwable &throw-context)) "Errors")))))
 
 
-(defn ^:public benchmark
+(defn ^:public cluster-latency
 	"Run redis-benchmark against cluster"
 	[cluster]
 	(slingshot/try+
 		(let [cluster-config ((keyword cluster) @config/nutcracker-yml)]
 			(if cluster-config
-					(println (:out (sh "timeout"
-																								"30s"
-																								"redis-cli"
-																								"--latency" 
-							 																"-h" config/twemproxy-host 
-							 																"-p" (last (clojure.string/split (:listen cluster-config) #":")))))
+					(:out (sh "timeout"
+															"5s"
+															"redis-cli"
+															"--latency"
+							 							"-h" config/twemproxy-host 
+							 							"-p" (last (clojure.string/split (:listen cluster-config) #":"))))
 				{:status 404 :body {:error "Not found"}}))
 		(catch Object _
 			(println (.getMessage (:throwable &throw-context)) "Error"))))
 
+(defn ^:private parse-lt
+	"Latency parse"
+	[stdin]
+	(re-seq #"([^:\s,()]+)" stdin))
 
-(defn ^:public influx-capture
+(defn ^:public influx-capture-latency
+	"Timestamp and save latency info in influx db"
+	[]
+	(slingshot/try+
+		(doseq [cluster (keys @config/nutcracker-yml)]
+			(let [latency (cluster-latency cluster)]
+				(println latency)
+				(println (parse-lt latency))))
+		(catch Object _
+			(println (.getMessage (:throwable &throw-context)) "Error"))))
+
+
+(defn ^:public influx-capture-info
 	"Timestamp and save stats in influx db"
 	[]
 	(slingshot/try+
