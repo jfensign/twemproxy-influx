@@ -38,6 +38,15 @@
 	(future (loop [] (apply f f-args) (Thread/sleep (* s 1000)) (recur))))
 
 
+(defn ^:private parse-lt
+	"Latency parse"
+	[stdin]
+	(reduce #(assoc % (keyword (str "latency_" (clojure.string/replace (nth %2 1) #"2K" "")))
+		                 (read-string (nth %2 2))) 
+	        {} 
+	        (re-seq #"(\w+): (\d+)" stdin)))
+
+
 (defn- ^:private select-key-by-type
 	"Filters keys by clojure.lang.THATSUPTOYOU!"
 	[m t]
@@ -50,8 +59,8 @@
   (slingshot/try+
   	(do
   		(let [client (Socket. config/twemproxy-host (read-string config/twemproxy-port))
-  			  reader (BufferedReader. (InputStreamReader. (.getInputStream client)))
-  			  stats  (.readLine reader)]
+  			     reader (BufferedReader. (InputStreamReader. (.getInputStream client)))
+  			     stats  (.readLine reader)]
   			(clojure.walk/keywordize-keys (parse-string stats))))
   	(catch Object _
   		(println (:throwable &throw-context) "Error")
@@ -82,7 +91,7 @@
 			 																																(first server-split)]
       (clojure.walk/keywordize-keys (wcar* (car/info*)))))))
 			(catch Object _
-				(comment (println (.getMessage (:throwable &throw-context)) "Errors")))))
+				(println (.getMessage (:throwable &throw-context)) "Errors"))))
 
 
 (defn ^:public fetch-config
@@ -111,29 +120,28 @@
 	(slingshot/try+
 		(let [cluster-config ((keyword cluster) @config/nutcracker-yml)]
 			(if cluster-config
-					(:out (sh "timeout"
-															"5s"
-															"redis-cli"
-															"--latency"
-							 							"-h" config/twemproxy-host 
-							 							"-p" (last (clojure.string/split (:listen cluster-config) #":"))))
-				{:status 404 :body {:error "Not found"}}))
+					(parse-lt
+						(:out 
+							(sh "timeout"
+	 									"5s"
+						 				"redis-cli"
+						 				"--latency"
+						 	 		"-h" config/twemproxy-host 
+						 	 		"-p" (last (clojure.string/split (:listen cluster-config) #":")))))
+				{:status 404 
+					:body {:error "Not found"}}))
 		(catch Object _
 			(println (.getMessage (:throwable &throw-context)) "Error"))))
 
-(defn ^:private parse-lt
-	"Latency parse"
-	[stdin]
-	(re-seq #"([^:\s,()]+)" stdin))
 
 (defn ^:public influx-capture-latency
 	"Timestamp and save latency info in influx db"
 	[]
 	(slingshot/try+
 		(doseq [cluster (keys @config/nutcracker-yml)]
-			(let [latency (cluster-latency cluster)]
-				(println latency)
-				(println (parse-lt latency))))
+			(let [latency (cluster-latency cluster)
+				     influx-data (conj {:cluster_name (clojure.string/replace (str cluster) #":" "")} latency)]
+				(influx/post-points influx-c config/influxdb-twemproxy-cluster-table [influx-data])))
 		(catch Object _
 			(println (.getMessage (:throwable &throw-context)) "Error"))))
 

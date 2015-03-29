@@ -1,0 +1,41 @@
+{
+  "name": "ng-grid",
+  "version": "2.0.8",
+  "homepage": "https://github.com/angular-ui/ng-grid",
+  "description": "Angular data grid",
+  "keywords": [
+    "angular",
+    "grid"
+  ],
+  "license": "MIT",
+  "main": [
+    "./ng-grid.css",
+    "./build/ng-grid.js"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "config",
+    "lib",
+    "scripts",
+    "src",
+    "test",
+    "workbench",
+    "conf.js",
+    "GruntFile.js"
+  ],
+  "dependencies": {
+    "jquery": "^1.8.0",
+    "angularjs": "^1.0.8"
+  },
+  "_release": "2.0.8",
+  "_resolution": {
+    "type": "version",
+    "tag": "v2.0.8",
+    "commit": "9bee7cf1f111124289d116580cae5bf4f77d549f"
+  },
+  "_source": "git://github.com/angular-ui/ng-grid.git",
+  "_target": "2.0.8",
+  "_originalSource": "ng-grid"
+}
